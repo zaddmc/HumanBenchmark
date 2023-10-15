@@ -21,36 +21,39 @@ namespace AimTrainer {
             simulator.Mouse.MoveMouseTo(pointhere.X, pointhere.Y);
             simulator.Mouse.LeftButtonClick();
 
-            
+
 
             while (true) {
-                for (int i = 0; i < points.Count; i++) {
-                    // check if block is white
-                    Color color = GetPixelColor(points[i]);
-                    if (color.R >= 50 && color.G >= 140 && color.B >= 200) {
-                        Console.WriteLine("point to be hit: ");
-                        Point point = UpScalePoint(points[i]);
-                        simulator.Mouse.MoveMouseTo(point.X, point.Y);
-                        simulator.Mouse.LeftButtonClick();
-                        hits++;
-                    }
-                }
+                int target = GetPixelColor(point1, point2);
+                Point point = UpScalePoint(points[target]);
+                simulator.Mouse.MoveMouseTo(point.X, point.Y);
+                simulator.Mouse.LeftButtonClick();
+                hits++;
+                Thread.Sleep(50);
                 if (hits >= 30) break;
             }
 
 
 
         }
-        static Color GetPixelColor(Point point) {
-            using (Bitmap screenCapture = new Bitmap(1, 1)) {
-                using (Graphics g = Graphics.FromImage(screenCapture)) {
-                    g.CopyFromScreen(point.X, point.Y, 0, 0, new Size(1, 1));
-                }
+        static int GetPixelColor(Point upperLeft, Point lowerRight) {
+            Bitmap screenCapture = new Bitmap(lowerRight.X - upperLeft.X, lowerRight.Y - upperLeft.Y);
+            Graphics g = Graphics.FromImage(screenCapture);
+            g.CopyFromScreen(upperLeft, new Point(0, 0), screenCapture.Size);
 
-                // return the color of the pixel
-                return screenCapture.GetPixel(0, 0);
+            List<Color> colors = new List<Color>();
+
+            for (int i = 0; i < points.Count; i++) {
+                Color pixel = screenCapture.GetPixel(points[i].X - upperLeft.X, points[i].Y - upperLeft.Y);
+                if (pixel.R >= 50 && pixel.G >= 140 && pixel.B >= 200)
+                    return i;
             }
+
+
+
+            return -1;
         }
+
         static Point UpScalePoint(Point point) {
             // the resolution of the screen, in my case its 1080p
             float xResolution = 1920, yResolution = 1080;
@@ -73,6 +76,5 @@ namespace AimTrainer {
                 }
             }
         }
-
     }
 }
